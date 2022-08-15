@@ -6,7 +6,6 @@ use std::collections::BTreeMap;
 use itertools::Itertools;
 
 
-
 #[derive(Debug, Clone)]
 pub struct Node<T: Copy + Ord> {
     pub output: Option<T>,
@@ -102,6 +101,7 @@ impl<T: Copy + Ord> Node<T> {
         Ok(ouput)
     }
 
+    /// Sorts the tree by the transition characters. Called automatically by the Node::tree() constructor.
     pub fn sort(&mut self) {
         if let Some(transitions) = &mut self.transitions {
             transitions.sort_by_key(|el| el.0);
@@ -111,6 +111,7 @@ impl<T: Copy + Ord> Node<T> {
         }
     }
 
+    /// Counts the number of paths through the tree that result in an output
     pub fn num_output_paths(&self) -> usize {
         match &self.transitions {
             Some(v) => {
@@ -127,14 +128,34 @@ impl<T: Copy + Ord> Node<T> {
         }
     }
 
-    #[cfg(test)]
+    /// Detect if any paths result in the same string
+    pub fn validate(&self) -> Result<(),Vec<(String,Vec<T>)>> {
+        let mut paths: Vec<(String, T)> = Vec::new();
+        self.input_paths_inner(vec![], &mut paths);
+        let mut map: BTreeMap<String,Vec<T>> = BTreeMap::new();
+        for (k, v) in paths {
+            map.entry(k).and_modify(|vec| vec.push(v));
+        }
+        let mut out = Vec::new();
+        for (k,v) in map.into_iter() {
+            if !v.is_empty() {
+                out.push((k,v))
+            }
+        }
+        if !out.is_empty() {
+            Err(out)
+        } else{
+            Ok(())
+        }
+    }
+
+    /// Documents every valid string that and the token T that it translates to. Results are sorted by tree order.
     pub fn input_paths(&self) -> Vec<(String,T)> {
         let mut paths: Vec<(String, T)> = Vec::new();
         self.input_paths_inner(vec![], &mut paths);
         paths
     }
 
-    #[cfg(test)]
     fn input_paths_inner(&self, chars: Vec<char>, paths: &mut Vec<(String,T)>) {
         if let Some(s) = self.output {
             paths.push((chars.iter().collect::<String>(),s))
@@ -148,7 +169,7 @@ impl<T: Copy + Ord> Node<T> {
         }
     }
 
-    #[cfg(test)]
+    /// Documents every token T that can be produced and all the strings that produce it
     pub fn output_paths(&self) -> Vec<(T, Vec<String>)> {
         let mut map = BTreeMap::new();
         self.output_paths_inner(vec![], &mut map);
@@ -157,9 +178,7 @@ impl<T: Copy + Ord> Node<T> {
         paths
     }
 
-    #[cfg(test)]
     fn output_paths_inner(&self, chars: Vec<char>, paths: &mut BTreeMap<T, Vec<String>>) {
-
         if let Some(s) = self.output {
             let input = chars.iter().collect::<String>();
             match paths.contains_key(&s) {
