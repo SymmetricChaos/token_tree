@@ -119,7 +119,7 @@ impl<T: Copy> Node<T> {
     }
 
     /// Extract tokens. If a substring is encountered that cannot produce a token
-    /// it an error is inserted into the output and the process continues.
+    /// an error is inserted into the output instead and the process continues.
     pub fn extract_tokens_infallible(&self, text: &str) -> Vec<Token<T>> {
         let chars = text.chars().collect::<Vec<_>>();
         let mut output = Vec::new();
