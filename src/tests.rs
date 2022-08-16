@@ -4,50 +4,44 @@ mod test {
     use lazy_static::lazy_static;
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-    pub enum Token<'a> {
+    pub enum Output {
         Letter(char),
-        Word(&'a str),
+        Word(&'static str),
     }
 
     lazy_static! {
-        pub static ref TREE: Node<&'static str> = Node::tree(vec![
-            Node::branch(
-                't',
-                Some("letter"),
-                vec![Node::branch(
-                    'h',
-                    None,
-                    vec![Node::branch(
-                        'e',
-                        Some("word"),
-                        vec![Node::leaf('e', "word")]
+        pub static ref TOKEN_TREE: Node<Output> = Node::tree(vec![
+            Node::branch('t', Some(Output::Letter('t')),
+                vec![
+                    Node::branch('h', None,
+                        vec![
+                            Node::branch('e', Some(Output::Word("the")),
+                                vec![Node::leaf('e', Output::Word("thee")
+                        )]
                     )]
                 )]
             ),
-            Node::branch('h', Some(&"letter"), vec![Node::leaf('e', "word")]),
-            Node::leaf('e', "letter")
-        ]);
-        
-        pub static ref TOKEN_TREE: Node<Token<'static>> = Node::tree(vec![
-            Node::branch(
-                't',
-                Some(Token::Letter('t')),
-                vec![Node::branch(
-                    'h',
-                    None,
-                    vec![Node::branch(
-                        'e',
-                        Some(Token::Word("the")),
-                        vec![Node::leaf('e', Token::Word("thee"))]
-                    )]
-                )]
+
+            Node::branch('h', Some(Output::Letter('h')),
+                vec![
+                    Node::branch('e', Some(Output::Word("he")),
+                        vec![
+                            Node::branch('a', None,
+                                vec![
+                                    Node::leaf('t', Output::Word("heat")),
+
+                                    Node::branch('r', Some(Output::Word("hear")),
+                                        vec![
+                                            Node::leaf('t', Output::Word("heart")),
+                                        ]
+                                    )
+                                ]
+                            )
+                        ]
+                    )
+                ]
             ),
-            Node::branch(
-                'h',
-                Some(Token::Letter('h')),
-                vec![Node::leaf('e', Token::Word("he"))]
-            ),
-            Node::leaf('e', Token::Letter('e'))
+            Node::leaf('e', Output::Letter('e'))
         ]);
     }
 
@@ -70,9 +64,18 @@ mod test {
     #[test]
     fn results() {
         print!("\n\n");
-        for sentence in ["t","the","thee","teh","ethehe","art","thj","th",] {
+        for sentence in ["t","thee","teh","th","art","tart","thj","hehearheatheart",] {
             println!("{}", sentence);
             println!("{:?}\n", TOKEN_TREE.extract_tokens(sentence));
+        }
+    }
+
+    #[test]
+    fn results_infallible() {
+        print!("\n\n");
+        for sentence in ["t","thee","teh","th","art","tart","thj","hehearheatheart",] {
+            println!("{}", sentence);
+            println!("{:?}\n", TOKEN_TREE.extract_tokens_infallible(sentence));
         }
     }
 }
